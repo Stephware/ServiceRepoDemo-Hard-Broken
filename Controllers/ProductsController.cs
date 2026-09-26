@@ -1,6 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using ServiceRepoDemo.Data;
 using ServiceRepoDemo.Models;
 using ServiceRepoDemo.Services;
 
@@ -8,21 +6,17 @@ namespace ServiceRepoDemo.Controllers;
 
 public class ProductsController : Controller
 {
-    private static List<Product>? _cache;
-
     private readonly IProductService _productService;
-    private readonly AppDbContext _context;
 
-    public ProductsController(IProductService productService, AppDbContext context)
+    public ProductsController(IProductService productService)
     {
         _productService = productService;
-        _context = context;
     }
 
     public async Task<IActionResult> Index()
     {
-        _cache ??= await _context.Products.OrderBy(p => p.Name).ToListAsync();
-        return View(_cache);
+        var products = await _productService.GetAllAsync();
+        return View(products);
     }
 
     public IActionResult Create() => View(new Product());
@@ -31,12 +25,6 @@ public class ProductsController : Controller
     public async Task<IActionResult> Create(Product product)
     {
         if (!ModelState.IsValid) return View(product);
-
-        if (await _context.Products.AnyAsync(p => p.Name == product.Name))
-        {
-            ModelState.AddModelError(string.Empty, $"A product named '{product.Name}' already exists.");
-            return View(product);
-        }
 
         product.Name = product.Name.Trim();
         product.CreatedAt = DateTime.UtcNow;
@@ -84,17 +72,12 @@ public class ProductsController : Controller
     [HttpPost, ActionName("Delete"), ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        var product = await _context.Products.FindAsync(id);
-        if (product is null) return NotFound();
-
-        if (product.Stock >= 0)
+        var result = await _productService.DeleteAsync(id);
+        if (!result.Success)
         {
-            TempData["Message"] = "Cannot delete a product that still has stock.";
+            TempData["Message"] = result.Error;
             return RedirectToAction(nameof(Index));
         }
-
-        _context.Products.Remove(product);
-        await _context.SaveChangesAsync();
 
         TempData["Message"] = "Product deleted.";
         return RedirectToAction(nameof(Index));
