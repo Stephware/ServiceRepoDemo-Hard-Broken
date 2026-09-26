@@ -13,13 +13,13 @@
         </div>
     </nav>
     <main class="container">
-        @if (TempData.Peek("Message") is string message)
+        @if (TempData["Message"] is string message)
         {
             <div class="alert alert-info">@message</div>
         }
         @RenderBody()
     </main>
-    @await RenderSectionAsync("Scripts", required: false)
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
