@@ -1,36 +1,32 @@
 # 30 Bug Fix Summary
 
-Short notes on what was wrong, what I changed, and why.
-
-| # | Error | Fix | Why it was wrong / why I fixed it |
-|---|---|---|---|
-| 1 | Product list used a static cache. | Removed the cache and always load fresh data. | The list could show old data after changes. |
-| 2 | Controller depended on `AppDbContext`. | Controller now uses `IProductService` only. | The controller should not talk directly to the database. |
-| 3 | `Index()` loaded products from `_context`. | `Index()` now calls the service. | It skipped the service layer. |
-| 4 | Duplicate-name checking was in the controller. | Moved the check to the service. | Duplicate checking is business logic. |
-| 5 | Duplicate check happened before trimming the name. | Trim first, then check. | `Mouse` and ` Mouse ` should be treated the same. |
-| 6 | Product name was trimmed in the controller. | Moved trimming to the service. | The service should handle business rules. |
-| 7 | `CreatedAt` was set in the controller. | Set it in the service. | The service should control creation rules. |
-| 8 | Failed Create redirected back to Create. | Return the same view with the error. | Redirecting loses the entered values and error. |
-| 9 | Successful Edit returned the Edit view again. | Redirect to `Index`. | A successful save should go back to the list. |
-| 10 | Delete used `AppDbContext` directly in the controller. | Delete now goes through the service. | It skipped the service and repository layers. |
-| 11 | Delete blocked `Stock == 0` because it used `>= 0`. | Changed the rule so only stock above `0` is blocked. | Products with exactly zero stock should be deletable. |
-| 12 | `ProductService` manually created `ProductRepository`. | Inject `IProductRepository` in the constructor. | DI should provide the repository instead of using `new`. |
-| 13 | Create service did not trim the name. | Added trimming before saving. | Extra spaces could cause bad or duplicate names. |
-| 14 | Create service did not check duplicate names. | Added duplicate-name validation. | Product names are supposed to be unique. |
-| 15 | Create service did not set `CreatedAt`. | Set `CreatedAt = DateTime.UtcNow`. | Creation time should be set once when the product is created. |
-| 16 | Update service did not trim the name. | Trim the edited name. | Edited names should follow the same rule as Create. |
-| 17 | Update did not properly check duplicates against other products. | Check duplicates while excluding the current product ID. | A product can keep its own name but cannot copy another product's name. |
-| 18 | Update changed `CreatedAt`. | Stopped updating `CreatedAt`. | Creation time should never change during Edit. |
-| 19 | Update saved the posted `product` instead of the loaded `existing` product. | Update the `existing` entity. | The loaded entity is the one being tracked and edited. |
-| 20 | `SaveChangesAsync()` was called without `await`. | Added `await`. | The method could finish before saving was done. |
-| 21 | Delete was missing from the service contract/logic. | Added `DeleteAsync` to the service and interface. | Delete business rules should stay in the service layer. |
-| 22 | Repository sorted products by `Description`. | Sort by `Name`. | The requirement is Name A-Z. |
-| 23 | Repository Delete detached the product. | Use `Remove(product)`. | Detaching does not delete anything from the database. |
-| 24 | Repository cleared tracking before saving. | Removed `ChangeTracker.Clear()`. | Clearing first throws away pending changes. |
-| 25 | Edit link sent `productId` instead of `id`. | Changed it to `asp-route-id`. | The controller expects a parameter named `id`. |
-| 26 | Edit form posted to `Create`. | Changed the form action to `Edit`. | Saving an edit should call the Edit POST action. |
-| 27 | Delete form used a hardcoded URL. | Used ASP.NET tag helpers for the Delete form. | Tag helpers keep routing correct and generate the proper form setup. |
-| 28 | Stock input used `name="Quantity"`. | Changed it to `asp-for="Stock"`. | Model binding was not receiving the Stock value. |
-| 29 | Layout used `TempData.Peek()`. | Read `TempData["Message"]` normally. | `Peek()` keeps the message, so it can appear again. |
-| 30 | jQuery loaded after validation scripts. | Load jQuery before the page validation scripts. | jQuery validation needs jQuery to already be loaded. |
+1. The product list used a static cache, so I removed it to make sure the list always shows the latest data.
+2. The controller depended on `AppDbContext`, so I changed it to use only `IProductService` because the controller should not access the database directly.
+3. `Index()` loaded products from `_context`, so I changed it to call the service to follow the proper app structure.
+4. Duplicate-name checking was inside the controller, so I moved it to the service because it is business logic.
+5. The duplicate check happened before trimming the name, so I trim first to avoid names with extra spaces being treated as different.
+6. The controller was trimming the product name, so I moved that to the service because business rules should stay there.
+7. The controller was setting `CreatedAt`, so I moved it to the service so creation rules are handled in one place.
+8. Failed Create redirected back to the page, so I return the same view instead to keep the entered values and error message.
+9. Successful Edit returned the Edit view again, so I changed it to redirect to `Index` after saving.
+10. Delete used `AppDbContext` directly in the controller, so I moved it through the service to keep the proper controller-service-repository flow.
+11. Delete used `Stock >= 0`, so I changed it to block only stock above `0` because products with zero stock should be deletable.
+12. `ProductService` manually created `ProductRepository`, so I changed it to inject `IProductRepository` because DI should provide dependencies.
+13. Create did not trim the product name in the service, so I added trimming to avoid extra spaces.
+14. Create did not check duplicate names in the service, so I added the check to keep product names unique.
+15. Create did not set `CreatedAt` in the service, so I added `DateTime.UtcNow` when creating a product.
+16. Update did not trim the edited name, so I added trimming to keep the same rule as Create.
+17. Update did not properly check duplicate names, so I exclude the current product ID while checking other products.
+18. Update changed `CreatedAt`, so I stopped updating it because creation time should stay the same.
+19. Update saved the posted `product` instead of the loaded `existing` product, so I update the existing entity instead.
+20. `SaveChangesAsync()` was called without `await`, so I added `await` to make sure saving finishes properly.
+21. Delete was missing from the service contract and logic, so I added `DeleteAsync` to the interface and service.
+22. The repository sorted products by `Description`, so I changed it to `Name` because the list should be A-Z by name.
+23. Repository Delete only detached the product, so I changed it to `Remove(product)` because detaching does not delete anything.
+24. The repository cleared the change tracker before saving, so I removed that because it could throw away pending changes.
+25. The Edit link sent `productId` instead of `id`, so I changed it to `asp-route-id` to match the controller parameter.
+26. The Edit form posted to `Create`, so I changed it to post to `Edit` so the correct action runs.
+27. The Delete form used a hardcoded URL, so I changed it to ASP.NET tag helpers to keep routing correct.
+28. The Stock input used `name="Quantity"`, so I changed it to `asp-for="Stock"` so model binding gets the correct value.
+29. The layout used `TempData.Peek()`, so I changed it to a normal TempData read so the message only shows once.
+30. jQuery loaded after the validation scripts, so I moved jQuery before them because client-side validation depends on it.
