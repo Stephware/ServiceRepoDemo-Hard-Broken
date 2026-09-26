@@ -1,4 +1,3 @@
-using ServiceRepoDemo.Data;
 using ServiceRepoDemo.Models;
 using ServiceRepoDemo.Repositories;
 
@@ -8,9 +7,9 @@ public class ProductService : IProductService
 {
     private readonly IProductRepository _repository;
 
-    public ProductService(AppDbContext context)
+    public ProductService(IProductRepository repository)
     {
-        _repository = new ProductRepository(context);
+        _repository = repository;
     }
 
     public Task<IEnumerable<Product>> GetAllAsync() => _repository.GetAllAsync();
