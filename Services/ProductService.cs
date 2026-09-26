@@ -61,7 +61,7 @@ public class ProductService : IProductService
         if (product is null)
             return ServiceResult.Fail("Product not found.");
 
-        if (product.Stock >= 0)
+        if (product.Stock > 0)
             return ServiceResult.Fail("Cannot delete a product that still has stock.");
 
         _repository.Delete(product);
