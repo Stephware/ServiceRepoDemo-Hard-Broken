@@ -39,14 +39,19 @@ public class ProductService : IProductService
         if (existing is null)
             return ServiceResult.Fail("Product not found.");
 
-        existing.Name = product.Name;
+        var trimmedName = product.Name.Trim();
+        var products = await _repository.GetAllAsync();
+
+        if (products.Any(p => p.Id != product.Id && p.Name.Equals(trimmedName, StringComparison.OrdinalIgnoreCase)))
+            return ServiceResult.Fail($"A product named '{trimmedName}' already exists.");
+
+        existing.Name = trimmedName;
         existing.Description = product.Description;
         existing.Price = product.Price;
         existing.Stock = product.Stock;
-        existing.CreatedAt = product.CreatedAt;
 
-        _repository.Update(product);
-        _repository.SaveChangesAsync();
+        _repository.Update(existing);
+        await _repository.SaveChangesAsync();
         return ServiceResult.Ok();
     }
 

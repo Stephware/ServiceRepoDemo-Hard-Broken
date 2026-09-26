@@ -57,7 +57,7 @@ public class ProductsController : Controller
         }
 
         TempData["Message"] = "Product updated.";
-        return View(product);
+        return RedirectToAction(nameof(Index));
     }
 
     public async Task<IActionResult> Delete(int id)
