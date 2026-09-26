@@ -26,14 +26,11 @@ public class ProductsController : Controller
     {
         if (!ModelState.IsValid) return View(product);
 
-        product.Name = product.Name.Trim();
-        product.CreatedAt = DateTime.UtcNow;
-
         var result = await _productService.CreateAsync(product);
         if (!result.Success)
         {
-            TempData["Message"] = result.Error;
-            return RedirectToAction(nameof(Create));
+            ModelState.AddModelError(string.Empty, result.Error!);
+            return View(product);
         }
 
         TempData["Message"] = "Product created.";
